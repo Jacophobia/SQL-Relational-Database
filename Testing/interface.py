@@ -20,14 +20,27 @@ TODO:
 import sqlite3
 
 # Connect to the database
-connection = sqlite3.connect('records.db')
+connection = sqlite3.connect('Testing/records.db')
 cursor = connection.cursor()
 
 # Create table (if it does not already exist)
 cursor.execute("CREATE TABLE IF NOT EXISTS employees (name TEXT, title TEXT, pay REAL)")
 
 def get_name(cursor):
-    pass
+    while True:
+        cursor.execute("SELECT name FROM employees")
+        names = set()
+        for name in cursor.fetchall():
+            print(name[0])
+            names.add(name[0])
+        fired_employee = input("Enter the name of the employee you want to delete\n> ")
+        if fired_employee in names:
+            return name[0]
+        else:
+            print("That is not a valid employee")
+
+
+    
 
 
 choice = None
@@ -41,25 +54,40 @@ while choice != "5":
     print()
     if choice == "1":
         # Display Employees
+        cursor.execute("SELECT * FROM employees")
         
         print("{:>10}  {:>10}  {:>10}".format("Name", "Title", "Pay"))
-        
-        #    print("{:>10}  {:>10}  {:>10}".format(record[0], record[1], record[2]))
+        for record in cursor.fetchall():
+            print("{:>10}  {:>10}  {:>10}".format(record[0], record[1], record[2]))
+
     elif choice == "2":
         # Add New Employee
         name = input("Name: ")
         title = input("Title: ")
         pay = float(input("Pay: "))
+        values = (name, title, pay)
+        cursor.execute("INSERT INTO employees VALUES (?, ?, ?)", values)
+        connection.commit()
 
     elif choice == "3":
-        # Update Employee Pay
-        name = input("Name: ")
-        pay = float(input("Pay: "))
+        try:
+            # Update Employee Pay
+            name = input("Name: ")
+            pay = float(input("Pay: "))
+            values = (pay, name)
+            cursor.execute("UPDATE employees SET pay = ? WHERE ?", values)
+            connection.commit()
+            if cursor.rowcount() == 0:
+                print("Invalid name")
+        except ValueError:
+            print("Invalid pay")
 
     elif choice == "4":
         # Delete employee
         name = get_name(cursor)
-
+        values = (name,)
+        cursor.execute("DELETE FROM employees WHERE name = ?", values)
+        connection.commit()
     print()
 
 # Close the database connection before exiting
