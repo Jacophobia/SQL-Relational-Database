@@ -9,8 +9,12 @@ TODO:
 
 1) Implement display employees.  Try sorting the results.
 2) Implement add new employee.  Check for invalid inputs for the pay.
-3) Implement update employee pay and check if no update was made because employee name was invalid
-4) Implement delete employee by implementing the get_name function.  The get_name funciton should list out all of the employees name with a numbered list.  The user will then select the number for the name they want to delete.
+3) Implement update employee pay and check if no update was made because 
+   employee name was invalid
+4) Implement delete employee by implementing the get_name function.  The 
+   get_name funciton should list out all of the employees name with a 
+   numbered list.  The user will then select the number for the name they 
+   want to delete.
 """
 
 import sqlite3
