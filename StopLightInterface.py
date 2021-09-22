@@ -1,11 +1,13 @@
 import sqlite3
 import random
+import time
+
 
 class StopLightInterface:
     def __init__(self):
         self.connection = sqlite3.connect('data/records.db')
         self.cursor = self.connection.cursor()
-        self.cursor.execute("CREATE TABLE IF NOT EXISTS ServiceRequests (incident_id MEDIUMINT UNSIGNED NOT NULL, summary TEXT, description TEXT, date_entered TEXT, department TEXT, request_source TEXT, category TEXT, color TEXT, reason_red TEXT, date_completed TEXT, date_expected TEXT, date_retired TEXT, PRIMARY KEY (incident_id))")
+        self.cursor.execute("CREATE TABLE IF NOT EXISTS ServiceRequests (incident_id MEDIUMINT UNSIGNED NOT NULL, summary TEXT, description TEXT, date_entered BIGINT UNSIGNED NOT NULL, department TEXT, request_source TEXT, category TEXT, color TEXT, reason_red TEXT, date_completed TEXT, date_expected TEXT, date_retired TEXT, PRIMARY KEY (incident_id))")
 
     def get_summary(self, incident_id):
         values = (incident_id,)
@@ -22,8 +24,10 @@ class StopLightInterface:
     def get_date_entered(self, incident_id):
         values = (incident_id,)
         self.cursor.execute("SELECT date_entered FROM ServiceRequests WHERE incident_id = ?", values)
-        date_entered = self.cursor.fetchone()[0]
-        return date_entered
+        date_entered_ms = self.cursor.fetchone()[0]
+        date_entered_yr = (((((date_entered_ms // 1000) // 60) // 60) // 24) // 365) + 1970
+        date_entered_dy = (((((date_entered_ms // 1000) // 60) // 60) // 24)) % 365.2425
+        return f"{date_entered_dy}/{date_entered_yr}"
 
     def get_department(self, incident_id):
         values = (incident_id,)
@@ -78,7 +82,7 @@ class StopLightInterface:
         for row in self.cursor.fetchall():
             print(row)
 
-    def add_request(self, summary=None, description=None, date_entered=None, department=None, request_source=None, category=None, color=None, reason_red=None, date_completed=None, date_expected=None, date_retired=None):
+    def add_request(self, summary=None, description=None, department=None, request_source=None, category=None, color=None, reason_red=None, date_completed=None, date_expected=None, date_retired=None):
         new_value = False
         self.cursor.execute("SELECT incident_id FROM ServiceRequests")
         while not new_value:
@@ -87,22 +91,42 @@ class StopLightInterface:
             for row in self.cursor.fetchall():
                 if row[0] == incident_id:
                     new_value = False
+
+        date_entered = int(round(time.time() * 1000))
+
         values = (incident_id, summary, description, date_entered, department, request_source, category, color, reason_red, date_completed, date_expected, date_retired)
         self.cursor.execute("INSERT INTO ServiceRequests VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", values)
         self.connection.commit()
 
+
 interface = StopLightInterface()
-interface.add_request(summary=input("summary"), description=input("description"), date_entered=input("date_entered"), department=input("department"), request_source=input("request_source"), category=input("category"), color=input("color"), reason_red=input("reason_red"), date_completed=input("date_completed"), date_expected=input("date_expected"), date_retired=input("date_retired"))
+
+if "y" == input("Would you like to enter a new item?\n(y/n)> "):
+    interface.add_request(
+        summary       = input("summary"), 
+        description   = input("description"), 
+        department    = input("department"), 
+        request_source= input("request_source"), 
+        category      = input("category"), 
+        color         = input("color"), 
+        reason_red    = input("reason_red"),
+        date_completed= input("date_completed"), 
+        date_expected = input("date_expected"), 
+        date_retired  = input("date_retired")
+    ) 
+
 interface.display_all()
 
-print(interface.get_summary(9418259))
-print(interface.get_description(9418259))
-print(interface.get_date_entered(9418259))
-print(interface.get_department(9418259))
-print(interface.get_request_source(9418259))
-print(interface.get_category(9418259))
-print(interface.get_color(9418259))
-print(interface.get_reason_red(9418259))
-print(interface.get_date_completed(9418259))
-print(interface.get_date_expected(9418259))
-print(interface.get_date_retired(9418259))
+Incident_Number = 9005550
+
+print(interface.get_summary(Incident_Number))
+print(interface.get_description(Incident_Number))
+print(interface.get_date_entered(Incident_Number))
+print(interface.get_department(Incident_Number))
+print(interface.get_request_source(Incident_Number))
+print(interface.get_category(Incident_Number))
+print(interface.get_color(Incident_Number))
+print(interface.get_reason_red(Incident_Number))
+print(interface.get_date_completed(Incident_Number))
+print(interface.get_date_expected(Incident_Number))
+print(interface.get_date_retired(Incident_Number))
