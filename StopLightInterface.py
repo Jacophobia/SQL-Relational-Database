@@ -1,13 +1,14 @@
 import sqlite3
 import random
 import time
+import math
 
 
 class StopLightInterface:
     def __init__(self):
         self.connection = sqlite3.connect('data/records.db')
         self.cursor = self.connection.cursor()
-        self.cursor.execute("CREATE TABLE IF NOT EXISTS ServiceRequests (incident_id MEDIUMINT UNSIGNED NOT NULL, summary TEXT, description TEXT, date_entered BIGINT UNSIGNED NOT NULL, department TEXT, request_source TEXT, category TEXT, color TEXT, reason_red TEXT, date_completed TEXT, date_expected TEXT, date_retired TEXT, PRIMARY KEY (incident_id))")
+        self.cursor.execute("CREATE TABLE IF NOT EXISTS ServiceRequests (incident_id MEDIUMINT UNSIGNED NOT NULL, summary TEXT, description TEXT NOT NULL, date_entered BIGINT UNSIGNED NOT NULL, department TEXT, request_source TEXT, category TEXT, color TEXT, reason_red TEXT, date_completed TEXT, date_expected TEXT, date_retired TEXT, PRIMARY KEY (incident_id))")
 
     def get_summary(self, incident_id):
         values = (incident_id,)
@@ -20,14 +21,36 @@ class StopLightInterface:
         self.cursor.execute("SELECT description FROM ServiceRequests WHERE incident_id = ?", values)
         description = self.cursor.fetchone()[0]
         return description
+    
+    def _get_feb_days(self, year):
+        if year % 400 == 0:
+            return 29
+        if year % 100 == 0:
+            return 28
+        if year % 4 == 0:
+            return 29
+        return 28
 
     def get_date_entered(self, incident_id):
         values = (incident_id,)
         self.cursor.execute("SELECT date_entered FROM ServiceRequests WHERE incident_id = ?", values)
         date_entered_ms = self.cursor.fetchone()[0]
-        date_entered_yr = (((((date_entered_ms // 1000) // 60) // 60) // 24) // 365) + 1970
-        date_entered_dy = (((((date_entered_ms // 1000) // 60) // 60) // 24)) % 365.2425
-        return f"{date_entered_dy}/{date_entered_yr}"
+        date_entered_yr = int((((((date_entered_ms / 1000) / 60) / 60) / 24) / 365.2425) + 1970)
+        date_entered_dy = int((((((date_entered_ms / 1000) / 60) / 60) / 24)) % 365.2425)
+        date_entered_hr = int((((date_entered_ms / 1000) / 60) / 60) % 24)
+        date_entered_mn = int(((date_entered_ms / 1000) / 60) % 60)
+        date_entered_sc = int((date_entered_ms / 1000) % 60)
+
+        days_in_month = [31, self._get_feb_days(date_entered_yr), 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
+
+        date_entered_mo = 1
+        for month in days_in_month:
+            if date_entered_dy > month:
+                date_entered_dy -= month
+                date_entered_mo += 1
+
+
+        return f"{date_entered_hr}:{date_entered_mn}:{date_entered_sc} {date_entered_mo}/{date_entered_dy}/{date_entered_yr} UTC"
 
     def get_department(self, incident_id):
         values = (incident_id,)
@@ -117,7 +140,7 @@ if "y" == input("Would you like to enter a new item?\n(y/n)> "):
 
 interface.display_all()
 
-Incident_Number = 9005550
+Incident_Number = 1655114
 
 print(interface.get_summary(Incident_Number))
 print(interface.get_description(Incident_Number))
